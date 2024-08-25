@@ -1,0 +1,23 @@
+﻿{
+	"specFlow": {
+		"bindingCulture": {
+			"language": "en"
+		},
+		"language": {
+			"feature": "en"
+		},
+		"runtime": {
+			"stopAtFirstError": false,
+			"missingOrPendingStepsOutcome": "Inconclusive",
+			"obsoleteBehavior": "Default",
+			"executionMode": "Parallel"
+		},
+		"stepAssemblies": [],
+		"trace": {
+			"traceSuccessfulSteps": true,
+			"traceTimings": true,
+			"minTracedDurationForTimings": "0:00:00.1",
+			"listener": "TechTalk.SpecFlow.Tracing.DefaultListener, TechTalk.SpecFlow"
+		}
+	}
+}

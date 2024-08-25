@@ -25,6 +25,11 @@ namespace SauceDemoTests.Pages
         [FindsBy(How = How.CssSelector, Using = "h3[data-test='error']")]
         public IWebElement ErrorMessage { get; set; }
 
+        public void NavigateToLoginPage()
+        {
+            driver.Navigate().GoToUrl("https://www.saucedemo.com/");
+        }
+
         private WebDriverWait GetWait()
         {
             return new WebDriverWait(driver, TimeSpan.FromSeconds(10));
