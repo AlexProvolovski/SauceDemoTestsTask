@@ -1,11 +1,8 @@
 ﻿using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Edge;
 using TechTalk.SpecFlow;
-using WebDriverManager;
-using WebDriverManager.DriverConfigs.Impl;
+using SauceDemoTests.Utils;
 
 namespace SauceDemoTests.Tests
 {
@@ -20,94 +17,44 @@ namespace SauceDemoTests.Tests
         }
 
         [BeforeScenario]
-        [Scope(Tag = "chrome")]
-        public void SetupChrome()
+        public void BeforeScenario()
         {
-            new DriverManager().SetUpDriver(new ChromeConfig());
-            var options = new ChromeOptions();
-            options.AddArgument("start-maximized");
-            var driver = new ChromeDriver(options);
-            InitializeWebDriver(driver);
-        }
+            var browserName = _scenarioContext.ScenarioInfo.Tags.Contains("edge") ? "edge" : "chrome";
+            var testName = _scenarioContext.ScenarioInfo.Title;
 
-        [BeforeScenario]
-        [Scope(Tag = "edge")]
-        public void SetupEdge()
-        {
-            new DriverManager().SetUpDriver(new EdgeConfig());
-            var options = new EdgeOptions();
-            options.AddArgument("start-maximized");
-            var driver = new EdgeDriver(options);
-            InitializeWebDriver(driver);
-        }
-
-        private void InitializeWebDriver(IWebDriver driver)
-        {
-            driver.Navigate().GoToUrl("https://www.saucedemo.com/");
+            var driver = new BrowserManager().InitializeBrowser(browserName);
             _scenarioContext.Set(driver, "WebDriver");
+
+            var testHelper = new TestHelper(driver, testName);
+            _scenarioContext.Set(testHelper, "TestHelper");
+
+            testHelper.LogTestStart(testName, browserName);
         }
 
         [AfterScenario]
         public void AfterScenario()
         {
-            var driver = _scenarioContext.Get<IWebDriver>("WebDriver");
-            string screenshotPath = string.Empty;
-
-            try
+            if (_scenarioContext.ContainsKey("WebDriver"))
             {
-                if (driver != null && TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
+                var driver = _scenarioContext.Get<IWebDriver>("WebDriver");
+                var testHelper = _scenarioContext.Get<TestHelper>("TestHelper");
+
+                var testName = _scenarioContext.ScenarioInfo.Title;
+
+                if (TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
                 {
                     string projectDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
                     string screenshotDirectory = Path.Combine(projectDirectory, "Screenshots");
+                    testHelper.CaptureScreenshot(screenshotDirectory);
 
-                    if (!Directory.Exists(screenshotDirectory))
-                    {
-                        Directory.CreateDirectory(screenshotDirectory);
-                    }
-
-                    var screenshot = ((ITakesScreenshot)driver).GetScreenshot();
-                    screenshotPath = Path.Combine(screenshotDirectory, $"{TestContext.CurrentContext.Test.Name}_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.png");
-                    screenshot.SaveAsFile(screenshotPath);
+                    string errorMessage = TestContext.CurrentContext.Result.Message;
+                    testHelper.LogError($"Test '{testName}' failed with error: {errorMessage}");
                 }
 
-                LogTestResult(TestContext.CurrentContext.Result.Outcome.Status.ToString(), screenshotPath);
-            }
-            catch (Exception ex)
-            {
-                LogTestResult("TearDown Error: " + ex.Message, screenshotPath);
-            }
-            finally
-            {
-                driver?.Quit();
-            }
-        }
+                string status = TestContext.CurrentContext.Result.Outcome.Status.ToString();
+                testHelper.LogTestEnd(testName, status);
 
-        private void LogTestResult(string status, string screenshotPath = "")
-        {
-            try
-            {
-                string projectDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-                string logDirectory = Path.Combine(projectDirectory, "Logs");
-                string logFilePath = Path.Combine(logDirectory, "TestResults.log");
-
-                if (!Directory.Exists(logDirectory))
-                {
-                    Directory.CreateDirectory(logDirectory);
-                }
-
-                if (!File.Exists(logFilePath))
-                {
-                    using (File.Create(logFilePath)) { }
-                }
-
-                using (StreamWriter writer = new StreamWriter(logFilePath, true))
-                {
-                    writer.WriteLine($"{DateTime.Now}: Test {TestContext.CurrentContext.Test.Name} {status}. Screenshot: {screenshotPath}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"LogTestResult Error: {ex.Message}");
+                new BrowserManager().CleanupBrowser(driver);
             }
         }
     }

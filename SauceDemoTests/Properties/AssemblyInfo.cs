@@ -1,5 +1,9 @@
 ﻿using NUnit.Framework;
+using log4net.Config;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
+[assembly: Parallelizable(ParallelScope.Fixtures)]
 [assembly: LevelOfParallelism(3)]
 
-[assembly: log4net.Config.XmlConfigurator(ConfigFile = "log4net.config", Watch = true)]
+[assembly: XmlConfigurator(ConfigFile = "Properties\\log4net.config", Watch = true)]

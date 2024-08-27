@@ -1,4 +1,5 @@
-﻿using OpenQA.Selenium;
+﻿using NUnit.Framework;
+using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,15 @@ namespace SauceDemoTests.Pages
         public string GetPageTitle()
         {
             return driver.Title;
+        }
+
+        public void VerifyDashboardPageTitle(string expectedTitle)
+        {
+            string actualTitle = GetPageTitle();
+            if (actualTitle != expectedTitle)
+            {
+                throw new AssertionException($"Expected page title to be '{expectedTitle}', but was '{actualTitle}'.");
+            }
         }
     }
 }
